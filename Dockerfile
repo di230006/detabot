@@ -1,8 +1,12 @@
 FROM php:8.1-apache
 
 # The php:8.1-apache image can end up with two MPMs enabled, which makes Apache
-# refuse to start (AH00534). Force the single prefork MPM that mod_php requires.
-RUN a2dismod mpm_event 2>/dev/null; a2dismod mpm_worker 2>/dev/null; a2enmod mpm_prefork rewrite headers
+# refuse to start (AH00534). Force the single prefork MPM that mod_php requires
+# by removing the conflicting module symlinks outright, then enabling prefork.
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true; \
+    rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*; \
+    a2enmod mpm_prefork rewrite headers; \
+    echo "MPM modules enabled:"; ls /etc/apache2/mods-enabled/ | grep mpm_
 
 RUN apt-get update && apt-get install -y \
     zip unzip git curl libzip-dev libpng-dev \
