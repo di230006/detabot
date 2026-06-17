@@ -1,12 +1,12 @@
 FROM php:8.1-apache
 
 # The php:8.1-apache image can end up with two MPMs enabled, which makes Apache
-# refuse to start (AH00534). Force the single prefork MPM that mod_php requires
-# by removing the conflicting module symlinks outright, then enabling prefork.
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true; \
-    rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*; \
+# refuse to start (AH00534). Remove EVERY mpm symlink, then enable only prefork
+# (required by mod_php). The diagnostics below print the result into the build log.
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf; \
     a2enmod mpm_prefork rewrite headers; \
-    echo "MPM modules enabled:"; ls /etc/apache2/mods-enabled/ | grep mpm_
+    echo "### mpm symlinks in mods-enabled:"; (ls /etc/apache2/mods-enabled/ | grep -i mpm || echo "(none)"); \
+    echo "### MPM loaded per apache2ctl -M:"; (apache2ctl -M 2>&1 | grep -i mpm || true)
 
 RUN apt-get update && apt-get install -y \
     zip unzip git curl libzip-dev libpng-dev \
