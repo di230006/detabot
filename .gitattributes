@@ -1,0 +1,4 @@
+# Shell scripts must use LF endings or they fail to execute in the Linux
+# container ("bad interpreter / no such file or directory" on the shebang).
+*.sh text eol=lf
+.docker/entrypoint.sh text eol=lf

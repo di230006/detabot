@@ -1,12 +1,6 @@
 FROM php:8.1-apache
 
-# The php:8.1-apache image can end up with two MPMs enabled, which makes Apache
-# refuse to start (AH00534). Remove EVERY mpm symlink, then enable only prefork
-# (required by mod_php). The diagnostics below print the result into the build log.
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf; \
-    a2enmod mpm_prefork rewrite headers; \
-    echo "### mpm symlinks in mods-enabled:"; (ls /etc/apache2/mods-enabled/ | grep -i mpm || echo "(none)"); \
-    echo "### MPM loaded per apache2ctl -M:"; (apache2ctl -M 2>&1 | grep -i mpm || true)
+RUN a2enmod rewrite headers
 
 RUN apt-get update && apt-get install -y \
     zip unzip git curl libzip-dev libpng-dev \
@@ -29,9 +23,12 @@ RUN chmod -R 777 /var/www/html/uploads /var/www/html/data
 
 COPY .docker/apache.conf /etc/apache2/sites-available/000-default.conf
 COPY .docker/ports.conf /etc/apache2/ports.conf
+COPY .docker/entrypoint.sh /usr/local/bin/detabot-entrypoint
+RUN chmod +x /usr/local/bin/detabot-entrypoint
 
 # Railway injects $PORT at runtime; default to 80 for local Docker builds.
 ENV PORT=80
 
 EXPOSE 80
-CMD ["apache2-foreground"]
+# Entrypoint enforces a single MPM at startup, then runs apache2-foreground.
+CMD ["detabot-entrypoint"]
