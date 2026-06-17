@@ -595,7 +595,7 @@ function handle_post(): void
         $treatmentPerformed = trim((string) ($_POST['treatmentPerformed'] ?? ''));
 
         db_execute(
-            'INSERT INTO tbl_health_book (userID, appointmentID, createdBy, title, condition, nextTreatment, nextDate, notes, chartData, treatmentPerformed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO tbl_health_book (userID, appointmentID, createdBy, title, `condition`, nextTreatment, nextDate, notes, chartData, treatmentPerformed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [$patientID, $appointmentID, (int) $user['userID'], $title, $condition, $nextTreatment ?: null, $nextDate ?: null, $notes ?: null, $chartData ?: null, $treatmentPerformed ?: null]
         );
         $entryID = (int) db()->lastInsertId();

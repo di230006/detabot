@@ -244,7 +244,7 @@ function initialize_database(PDO $pdo): void
             appointmentID INT,
             createdBy INT NOT NULL,
             title VARCHAR(200) NOT NULL,
-            condition TEXT NOT NULL,
+            `condition` TEXT NOT NULL,
             nextTreatment VARCHAR(200),
             nextDate DATE,
             notes TEXT,
