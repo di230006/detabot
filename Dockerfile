@@ -1,6 +1,8 @@
 FROM php:8.1-apache
 
-RUN a2enmod rewrite headers
+# The php:8.1-apache image can end up with two MPMs enabled, which makes Apache
+# refuse to start (AH00534). Force the single prefork MPM that mod_php requires.
+RUN a2dismod mpm_event 2>/dev/null; a2dismod mpm_worker 2>/dev/null; a2enmod mpm_prefork rewrite headers
 
 RUN apt-get update && apt-get install -y \
     zip unzip git curl libzip-dev libpng-dev \
