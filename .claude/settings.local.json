@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Remove-Item \"c:\\\\Users\\\\amirsyahmi\\\\Documents\\\\Codex\\\\2026-05-11\\\\files-mentioned-by-the-user-templat\\\\Detabot_VSCode\\\\public\\\\chatbot.php\" -Force)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\amirsyahmi\\\\Documents\\\\Codex\\\\2026-05-11\\\\files-mentioned-by-the-user-templat\\\\Detabot_VSCode\\\\app\\\\views\\\\chatbot.php\" -Force)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\amirsyahmi\\\\Documents\\\\Codex\\\\2026-05-11\\\\files-mentioned-by-the-user-templat\\\\Detabot_VSCode\\\\public\\\\assets\\\\chatbot.js\" -Force)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\amirsyahmi\\\\Documents\\\\Codex\\\\2026-05-11\\\\files-mentioned-by-the-user-templat\\\\Detabot_VSCode\\\\public\\\\assets\\\\chatbot.css\" -Force)",
+      "Bash(Write-Output \"Done\")",
+      "PowerShell(Start-Process \"chrome.exe\" \"http://localhost/Detabot_VSCode/public/index.php\")",
+      "PowerShell(Start-Process \"chrome.exe\" \"http://localhost/Detabot_VSCode/public/health_record.php\")",
+      "Bash(php -l public/health_record.php)",
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"C:\\\\xampp\\\\htdocs\\\\Detabot_VSCode\\\\public\\\\health_record.php\" 2>&1)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost/Detabot_VSCode/public/health_record.php\" -UseBasicParsing -MaximumRedirection 0 -ErrorAction SilentlyContinue | Select-Object StatusCode, StatusDescription, @{n='Location';e={$_.Headers['Location']}})"
+    ]
+  }
+}

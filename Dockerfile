@@ -1,0 +1,27 @@
+FROM php:8.1-apache
+
+RUN a2enmod rewrite headers
+
+RUN apt-get update && apt-get install -y \
+    zip unzip git curl libzip-dev libpng-dev \
+    && docker-php-ext-install mysqli pdo pdo_mysql zip gd \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+COPY . .
+
+RUN if [ -f composer.json ]; then composer install --no-interaction --optimize-autoloader --no-dev; fi
+
+RUN mkdir -p uploads/avatars uploads/payments uploads/dentists data/sessions
+
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 755 /var/www/html
+RUN chmod -R 777 /var/www/html/uploads /var/www/html/data
+
+COPY .docker/apache.conf /etc/apache2/sites-available/000-default.conf
+
+EXPOSE 80
+CMD ["apache2-foreground"]

@@ -1,0 +1,8 @@
+{
+  "name": "detabot/dental-system",
+  "description": "Detabot AI Dental Clinic Management System",
+  "require": {
+    "php": ">=8.1",
+    "phpmailer/phpmailer": "^6.8"
+  }
+}
