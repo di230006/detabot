@@ -22,6 +22,10 @@ RUN chmod -R 755 /var/www/html
 RUN chmod -R 777 /var/www/html/uploads /var/www/html/data
 
 COPY .docker/apache.conf /etc/apache2/sites-available/000-default.conf
+COPY .docker/ports.conf /etc/apache2/ports.conf
+
+# Railway injects $PORT at runtime; default to 80 for local Docker builds.
+ENV PORT=80
 
 EXPOSE 80
 CMD ["apache2-foreground"]
