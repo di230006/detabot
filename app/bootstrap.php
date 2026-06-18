@@ -301,6 +301,25 @@ function initialize_database(PDO $pdo): void
             verifiedDate DATETIME,
             createdDate $created
         )$suffix",
+
+        "CREATE TABLE IF NOT EXISTS tbl_invoice (
+            invoiceID $id,
+            appointmentID INT NOT NULL,
+            userID INT NOT NULL,
+            invoiceNo VARCHAR(20) NOT NULL,
+            baseService VARCHAR(100) NOT NULL,
+            baseAmount DECIMAL(10,2) NOT NULL,
+            additionalItems TEXT,
+            subtotal DECIMAL(10,2) NOT NULL,
+            discount DECIMAL(10,2) NOT NULL DEFAULT 0,
+            discountReason VARCHAR(255),
+            totalAmount DECIMAL(10,2) NOT NULL,
+            invoiceStatus VARCHAR(20) NOT NULL DEFAULT 'unpaid',
+            notes TEXT,
+            generatedBy INT NOT NULL,
+            generatedDate $created,
+            updatedDate $created
+        )$suffix",
     ];
 
     foreach ($statements as $statement) {

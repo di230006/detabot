@@ -122,6 +122,11 @@ db_execute(
     [$apptID]
 );
 
+db_execute(
+    "UPDATE tbl_invoice SET invoiceStatus = 'pending_verification', updatedDate = CURRENT_TIMESTAMP WHERE appointmentID = ?",
+    [$apptID]
+);
+
 $paymentID = (int) db()->lastInsertId();
 
 log_activity('submit_payment', "Submitted payment for appointment #$apptID via $method", $uid);

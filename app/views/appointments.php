@@ -450,6 +450,151 @@ if (!empty($confirmedForPayment)):
 </section>
 <?php endif; ?>
 
+<?php
+try {
+    $myInvoices = db_all(
+        "SELECT i.*, a.appointmentDate, a.appointmentTime, a.serviceType, a.duration, a.notes AS apptNotes
+         FROM tbl_invoice i
+         JOIN tbl_appointment a ON a.appointmentID = i.appointmentID
+         WHERE i.userID = ? AND i.invoiceStatus != 'draft'
+         ORDER BY i.generatedDate DESC",
+        [$uid]
+    );
+} catch (\Exception $e) {
+    $myInvoices = [];
+}
+if (!empty($myInvoices)):
+?>
+<!-- ── My Invoices ── -->
+<section class="panel" id="invoicesSection" style="margin-bottom:1.5rem">
+    <div class="sec-hd">
+        <h2>My Invoices</h2>
+        <span style="font-size:12px;color:#72647a">Invoices generated after your completed treatments</span>
+    </div>
+    <div class="appt-cards-list">
+        <?php foreach ($myInvoices as $inv):
+            $invID     = (int) $inv['invoiceID'];
+            $invNo     = htmlspecialchars((string) $inv['invoiceNo'], ENT_QUOTES);
+            $invSt     = (string) ($inv['invoiceStatus'] ?? 'unpaid');
+            $invTotal  = number_format((float) ($inv['totalAmount'] ?? 0), 2);
+            $invDate   = date('d M Y', strtotime((string) ($inv['generatedDate'] ?? '')));
+            $invSvc    = htmlspecialchars((string) ($inv['serviceType'] ?? ''), ENT_QUOTES);
+            $invDent   = extract_dentist_name((string) ($inv['apptNotes'] ?? ''));
+            $invApptD  = (string) ($inv['appointmentDate'] ?? '');
+            $invTm     = substr((string) ($inv['appointmentTime'] ?? ''), 0, 5);
+            $invApptID = (int) $inv['appointmentID'];
+            $invBase   = htmlspecialchars((string) ($inv['baseService'] ?? ''), ENT_QUOTES);
+            $invBaseAmt = number_format((float) ($inv['baseAmount'] ?? 0), 2);
+            $invItems  = json_decode((string) ($inv['additionalItems'] ?? '[]'), true) ?: [];
+            $invSub    = number_format((float) ($inv['subtotal'] ?? 0), 2);
+            $invDisc   = (float) ($inv['discount'] ?? 0);
+            $invDiscR  = htmlspecialchars((string) ($inv['discountReason'] ?? ''), ENT_QUOTES);
+            $invNotes  = htmlspecialchars((string) ($inv['notes'] ?? ''), ENT_QUOTES);
+
+            $invBorderColor = match($invSt) {
+                'paid'                 => '#16845c',
+                'pending_verification' => '#c77712',
+                default                => '#7c3aed',
+            };
+            [$invStLabel, $invStClass] = match($invSt) {
+                'paid'                 => ['Paid', 'pay-badge-paid'],
+                'pending_verification' => ['Verifying', 'pay-badge-verifying'],
+                default                => ['Unpaid', 'pay-badge-unpaid'],
+            };
+
+            $priceMinInv = service_price_min((string) ($inv['serviceType'] ?? ''));
+        ?>
+        <div class="appt-card" style="border-left:3px solid <?= $invBorderColor ?>">
+            <div class="appt-date-box completed" style="min-width:70px">
+                <div style="font-size:11px;color:#72647a;font-weight:700"><?= $invNo ?></div>
+                <div class="aday" style="font-size:16px"><?= $invDate ?></div>
+            </div>
+            <div class="appt-card-body">
+                <div class="appt-card-top">
+                    <span class="appt-card-service"><?= $invSvc ?></span>
+                    <span class="pay-badge <?= $invStClass ?>"><?= $invStLabel ?></span>
+                </div>
+                <div class="appt-card-meta">
+                    <span class="appt-meta-item" style="font-weight:700;color:#7c3aed;font-size:15px">RM <?= $invTotal ?></span>
+                    <span class="appt-meta-item"><?= htmlspecialchars($invDent, ENT_QUOTES) ?></span>
+                </div>
+                <div class="appt-card-actions" style="gap:8px;display:flex;flex-wrap:wrap;margin-top:8px">
+                    <button class="aab" style="background:#f3f0ff;color:#7c3aed;border:1.5px solid #e5ddf5"
+                        onclick="toggleInvDetail(<?= $invID ?>)">📋 View Details</button>
+                    <?php if ($invSt === 'unpaid'): ?>
+                    <button class="aab purple"
+                        onclick="openPaymentModal(
+                            <?= $invApptID ?>,
+                            '<?= e(addslashes((string)$inv['serviceType'])) ?>',
+                            '<?= e(addslashes($invDent)) ?>',
+                            '<?= e($invApptD) ?>',
+                            '<?= e($invTm) ?>',
+                            '<?= e(format_duration((int)($inv['duration'] ?? 30))) ?>',
+                            <?= (float)$inv['totalAmount'] ?>
+                        )">💳 Pay Now</button>
+                    <?php elseif ($invSt === 'pending_verification'): ?>
+                    <span style="font-size:12px;color:#c77712;font-weight:600">⏳ Awaiting verification</span>
+                    <?php elseif ($invSt === 'paid'): ?>
+                    <span style="font-size:12px;color:#16845c;font-weight:600">✓ Paid</span>
+                    <?php endif; ?>
+                </div>
+                <!-- Expandable detail -->
+                <div id="invDetail-<?= $invID ?>" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #ede8f8">
+                    <table style="width:100%;font-size:13px;border-collapse:collapse">
+                        <tr style="background:#f9f7fe">
+                            <th style="padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase">Item</th>
+                            <th style="padding:8px 10px;text-align:center;font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase">Qty</th>
+                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase">Price</th>
+                            <th style="padding:8px 10px;text-align:right;font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase">Total</th>
+                        </tr>
+                        <tr>
+                            <td style="padding:6px 10px;border-bottom:1px solid #f3eeff;font-weight:600"><?= $invBase ?></td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #f3eeff;text-align:center">1</td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #f3eeff;text-align:right">RM <?= $invBaseAmt ?></td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #f3eeff;text-align:right;font-weight:600">RM <?= $invBaseAmt ?></td>
+                        </tr>
+                        <?php foreach ($invItems as $ii): ?>
+                        <tr>
+                            <td style="padding:6px 10px;border-bottom:1px solid #f3eeff;font-weight:600"><?= htmlspecialchars((string)($ii['name'] ?? ''), ENT_QUOTES) ?></td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #f3eeff;text-align:center"><?= (int)($ii['qty'] ?? 1) ?></td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #f3eeff;text-align:right">RM <?= number_format((float)($ii['price'] ?? 0), 2) ?></td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #f3eeff;text-align:right;font-weight:600">RM <?= number_format((float)($ii['total'] ?? 0), 2) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <tr>
+                            <td colspan="3" style="padding:6px 10px;text-align:right;font-weight:600;color:#72647a">Subtotal</td>
+                            <td style="padding:6px 10px;text-align:right;font-weight:600">RM <?= $invSub ?></td>
+                        </tr>
+                        <?php if ($invDisc > 0): ?>
+                        <tr>
+                            <td colspan="3" style="padding:6px 10px;text-align:right;color:#72647a">Discount<?= $invDiscR ? " ($invDiscR)" : '' ?></td>
+                            <td style="padding:6px 10px;text-align:right;color:#dc2626;font-weight:600">- RM <?= number_format($invDisc, 2) ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <tr style="background:#f0fdf4">
+                            <td colspan="3" style="padding:10px 10px;text-align:right;font-weight:700;color:#065f46">TOTAL</td>
+                            <td style="padding:10px 10px;text-align:right;font-weight:800;color:#7c3aed;font-size:15px">RM <?= $invTotal ?></td>
+                        </tr>
+                    </table>
+                    <?php if ($invNotes): ?>
+                    <div style="margin-top:10px;padding:10px 12px;background:#faf8ff;border-radius:8px;font-size:12.5px;color:#72647a">
+                        <strong style="color:#3b0764">📝 Notes:</strong> <?= $invNotes ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</section>
+<script>
+function toggleInvDetail(id) {
+    var el = document.getElementById('invDetail-' + id);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+<?php endif; ?>
+
 <!-- ── Book New Appointment ── -->
 <section class="panel" id="bookSection">
     <div class="sec-hd"><h2>Book New Appointment</h2></div>

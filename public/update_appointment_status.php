@@ -89,9 +89,16 @@ if ($newStatus === 'confirmed' && (string) $appt['status'] !== 'confirmed') {
     }
 }
 
-echo json_encode([
+$response = [
     'success'   => true,
     'message'   => 'Status updated.',
     'newStatus' => $newStatus,
     'apptID'    => $apptID,
-]);
+];
+
+if ($newStatus === 'completed') {
+    $response['invoiceReminder'] = true;
+    $response['invoiceUrl']      = 'generate_invoice.php?appointmentID=' . $apptID;
+}
+
+echo json_encode($response);

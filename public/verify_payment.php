@@ -55,6 +55,10 @@ if ($action === 'verify') {
         "UPDATE tbl_appointment SET paymentStatus = 'paid', updatedDate = CURRENT_TIMESTAMP WHERE appointmentID = ?",
         [$apptID]
     );
+    db_execute(
+        "UPDATE tbl_invoice SET invoiceStatus = 'paid', updatedDate = CURRENT_TIMESTAMP WHERE appointmentID = ?",
+        [$apptID]
+    );
     log_activity('verify_payment', "Verified payment #$paymentID for appointment #$apptID", $staffID);
 
     // ── Send payment verified email ───────────────────────────────────────────
@@ -97,6 +101,10 @@ if ($action === 'verify') {
     );
     db_execute(
         "UPDATE tbl_appointment SET paymentStatus = 'unpaid', updatedDate = CURRENT_TIMESTAMP WHERE appointmentID = ?",
+        [$apptID]
+    );
+    db_execute(
+        "UPDATE tbl_invoice SET invoiceStatus = 'unpaid', updatedDate = CURRENT_TIMESTAMP WHERE appointmentID = ?",
         [$apptID]
     );
     log_activity('verify_payment', "Rejected payment #$paymentID for appointment #$apptID", $staffID);

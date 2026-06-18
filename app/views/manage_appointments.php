@@ -366,6 +366,7 @@ function page_manage_appointments(array $user): void
                             <button class="ma-btn ma-btn-cancel"   onclick="maUpdateStatus(<?= $aID ?>,'cancelled',this,'confirmed')">✕ Cancel</button>
                         <?php elseif ($aSt === 'completed'): ?>
                             <a class="ma-btn ma-btn-record" href="staff_health_record.php?patient=<?= $uID ?>">+ Record</a>
+                            <a class="ma-btn ma-btn-confirm" href="generate_invoice.php?appointmentID=<?= $aID ?>" style="background:#7c3aed;color:#fff;border-color:#7c3aed">🧾 Invoice</a>
                         <?php endif; ?>
                         <button class="ma-btn ma-btn-view" onclick="maOpenModal(<?= $aID ?>)">👁 View</button>
                     </div>
@@ -804,6 +805,11 @@ function maUpdateStatus(apptID, newStatus, btn, prevStatus) {
         .then(function (d) {
             if (d.success) {
                 maApplyStatusChange(apptID, newStatus, row);
+                if (d.invoiceReminder) {
+                    if (confirm('Appointment completed! Generate an invoice for this patient now?')) {
+                        window.location.href = d.invoiceUrl;
+                    }
+                }
             } else {
                 alert(d.error || 'Failed to update status.');
                 btns.forEach(function (b) { b.disabled = false; });
@@ -843,6 +849,7 @@ function maRenderButtons(apptID, newStatus, row) {
         html += '<button class="ma-btn ma-btn-cancel"   onclick="maUpdateStatus(' + apptID + ',\'cancelled\',this,\'confirmed\')">✕ Cancel</button>';
     } else if (newStatus === 'completed') {
         html += '<a class="ma-btn ma-btn-record" href="staff_health_record.php?patient=' + uID + '">+ Record</a>';
+        html += '<a class="ma-btn ma-btn-confirm" href="generate_invoice.php?appointmentID=' + apptID + '" style="background:#7c3aed;color:#fff;border-color:#7c3aed">🧾 Invoice</a>';
     }
     html += '<button class="ma-btn ma-btn-view" onclick="maOpenModal(' + apptID + ')">👁 View</button>';
     cell.innerHTML = html;
